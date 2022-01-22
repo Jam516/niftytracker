@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>NiftyTracker</title>
+    <link rel="stylesheet" href="static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/fonts/font-awesome.min.css">
+    <link rel="stylesheet" href="static/css/styles.css">
+    <link rel="stylesheet" href="static/css/untitled.css">
+</head>
+
+<body>
+    <h1 style="padding: 20px;font-weight: bold;">NiftyTracker</h1>
+    <div class="container" style="margin-bottom: 0px;">
+        <div class="row" style="margin-right: 0px;margin-left: -12px;margin-bottom: 16px;">
+            <div class="col" style="padding-right: 12px;padding-left: 10px;">
+
+                <form class="search" method="get" action="/data" >
+                  <div style="box-shadow: 4px 4px 0px 0px;border-radius: 0px;border: 3px solid rgb(0,0,0);">
+                      <input type="text" name="address" placeholder="Enter Ethereum Address" style="padding: 0px;color: rgb(102,102,102);text-align: left;font-weight: bold;margin-bottom: 0px;padding-right: 0px;margin-right: 0px;padding-left: 4px; min-width: 100%;" />
+                  </div>
+                </form>
+            </div>
+
+        </div>
+        {% if results.success == 'False' %}
+        <div class="row">
+            <div class="col">
+                <p style="padding: 0px;color: var(--bs-red);font-size: 22px;text-align: left;font-weight: bold;margin-bottom: 0px;">Invalid Ethereum Address<br></p>
+            </div>
+        </div>
+        {% endif %}
+        {% if results.count > 0 %}
+          <div>
+              <p id="address" style="padding: 0px;color: rgb(0,0,0);text-align: left;font-weight: bold;margin-bottom: 10px;padding-right: 0px;margin-right: 0px;padding-left: 4px;">{{ results.address }}</p>
+          </div>
+
+          {% for key,value in results.data.iterrows() %}
+          <div class="row">
+              <div class="col" style="max-width: 125px;">
+                  <div class="d-flex justify-content-center" style="box-shadow: 4px 3px 0px 0px;border-radius: 0px;margin-bottom: 38px;min-width: 106px;max-height: 100px;border: 3px solid rgb(0,0,0);"><img src="{{ value['link'] }}" style="padding: 0px;max-height: 100px;max-width: 100px;"></div>
+              </div>
+              <div class="col">
+                  <p style="padding: 0px;color: rgb(86,86,86);font-size: 18px;text-align: left;font-weight: bold;margin-bottom: 0px;margin-top: 24px;">{{ value['transaction_date'] }}<br></p>
+                  <p style="padding: 0px;color: rgb(0,0,0);font-size: 22px;text-align: left;font-weight: bold;margin-bottom: 0px;">{{ value['caption'] }}<br></p>
+              </div>
+          </div>
+          {% endfor %}
+
+          <div id="scroller" class="mb-3">
+
+            <!-- template schema, hidden from the dom -->
+            <template id="post_template">
+
+              <!-- template content -->
+              <div class="row">
+                  <div class="col" style="max-width: 125px;">
+                      <div class="d-flex justify-content-center" style="box-shadow: 4px 3px 0px 0px;border-radius: 0px;margin-bottom: 38px;min-width: 106px;max-height: 100px;border: 3px solid rgb(0,0,0);"><img id="viz" src="static/img/istockphoto-1278906674-170667a.jpg" style="padding: 0px;max-height: 100px;max-width: 100px;"></div>
+                  </div>
+                  <div class="col">
+                      <p id="date" style="padding: 0px;color: rgb(86,86,86);font-size: 18px;text-align: left;font-weight: bold;margin-bottom: 0px;margin-top: 24px;"></p>
+                      <p id="content" style="padding: 0px;color: rgb(0,0,0);font-size: 22px;text-align: left;font-weight: bold;margin-bottom: 0px;"></p>
+                  </div>
+              </div>
+
+            </template>
+
+          </div>
+
+          <div class="d-flex justify-content-center mb-3" id="sentinel">
+            <div class="spinner-border" role="status"></div>
+          </div>
+        {% endif %}
+        <div class="row">
+            <p id="continuation" style="color:white;">{{results.continuation}}</p>
+        </div>
+    </div>
+    <script src="static/bootstrap/js/bootstrap.min.js"></script>
+    <script>
+      // Get references to the dom elements
+      var address = document.querySelector("#address").innerHTML;
+      var cont = document.querySelector('#continuation');
+      var scroller = document.querySelector("#scroller");
+      var template = document.querySelector('#post_template');
+
+      function loadItems() {
+        var continuation = cont.innerHTML;
+
+        fetch(`/cont?address=${address}&c=${continuation}`).then((response) => {
+
+          response.json().then((data) => {
+
+            // If empty JSON, exit the function
+            if (!data['data'].length) {
+              sentinel.innerHTML = "No more transactions";
+              return;
+            }
+
+            //set continuation to new value
+            cont.innerHTML = data['continuation']
+
+            var entries = JSON.parse(data['data']);
+            console.log(Object.keys(entries).length);
+
+            // Iterate over the items in the response
+            for (var i = 0; i < Object.keys(entries).length; i++) {
+
+              // Clone the HTML template
+              let template_clone = template.content.cloneNode(true);
+
+              // Query & update the template content
+              template_clone.querySelector("#date").innerHTML = entries[i]['transaction_date'];
+              template_clone.querySelector("#content").innerHTML = entries[i]['caption'];
+              template_clone.querySelector("#viz").src = entries[i]['link'];
+
+              // Append template to dom
+              scroller.appendChild(template_clone);
+
+
+            }
+          })
+
+        })
+      }
+
+
+
+      // Create a new IntersectionObserver instance. when scroller in view call the endpoint
+      var intersectionObserver = new IntersectionObserver(entries => {
+
+      // If intersectionRatio is 0, the sentinel is out of view
+      // and we don't need to do anything. Exit the function
+      if (entries[0].intersectionRatio <= 0) {
+        return;
+      }
+
+      // Call the endpoint
+      loadItems();
+
+      });
+
+      // Instruct the IntersectionObserver to watch the sentinel
+      intersectionObserver.observe(sentinel);
+    </script>
+
+</body>
+
+</html>
