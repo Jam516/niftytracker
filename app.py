@@ -98,7 +98,7 @@ def process_json(data, address):
             df.loc[index, 'name'] = result['name']
         else:
             df.loc[index, 'name'] = '???'
-        time.sleep(0.1)
+        time.sleep(0.2)
 
     df['caption'] = df.apply(lambda row: parse_caption(row, address), axis=1)
     return df
