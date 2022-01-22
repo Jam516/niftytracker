@@ -98,6 +98,7 @@ def process_json(data, address):
             df.loc[index, 'name'] = result['name']
         else:
             df.loc[index, 'name'] = '???'
+        time.sleep(0.1)
 
     df['caption'] = df.apply(lambda row: parse_caption(row, address), axis=1)
     return df
@@ -167,11 +168,8 @@ def cont():
         return {"success": success, "data": jsonDf, "count": len(jsonDf), "address": address, "continuation": continuation}
 
 
-#Todo:clean up all useless garbage
 #change colour of box and shadow
-#Todo: deploy
-#Todo: chat to developer dao, furqhan and nftport
-#todo: tweet about it
+#Todo: chat to developer dao and nftport
 
 
 @app.errorhandler(404)

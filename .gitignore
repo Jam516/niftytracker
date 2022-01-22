@@ -26,7 +26,7 @@
 *.sql
 *.sqlite
 
-# otherss #
+# others #
 ######################
 **/__pycache__
 **/env
