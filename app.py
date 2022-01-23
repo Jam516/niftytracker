@@ -55,7 +55,7 @@ def parse_caption(row, address):
         return 'Sold '+n
 
 def format_date(value):
-    date_obj = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S')
+    date_obj = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S')
     return date_obj.strftime("%d/%m/%Y at %H:%M:%S")
 
 def parse_date(row):
@@ -66,6 +66,7 @@ def process_json(data, address):
     df = pd.DataFrame(data_json)
     df['contract_address'] = df.apply(lambda row: parse_contract(row), axis=1)
     df['token_id'] = df.apply(lambda row: parse_tokenid(row), axis=1)
+    df['transaction_date'] = df.apply(lambda row: parse_date(row), axis=1)
 
     if 'price_details' in df:
         df['price'] = df.apply(lambda row: parse_price(row), axis=1)
@@ -166,10 +167,6 @@ def cont():
         jsonDf = df.to_json(orient='index')
         continuation = data['continuation']
         return {"success": success, "data": jsonDf, "count": len(jsonDf), "address": address, "continuation": continuation}
-
-
-#change colour of box and shadow
-#Todo: chat to developer dao and nftport
 
 
 @app.errorhandler(404)
